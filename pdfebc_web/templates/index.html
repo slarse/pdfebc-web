@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block styles %}{{ super() }}{% endblock %}
+{% block page_content %}
+<div class="uploadFormDiv">
+    {{ wtf.quick_form(form) }}
+</div>
+{% endblock %}
