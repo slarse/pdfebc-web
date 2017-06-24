@@ -21,8 +21,10 @@ from .forms import FileUploadForm, CompressFilesForm
 PDFEBC_CORE_GITHUB = 'https://github.com/slarse/pdfebc-core'
 PDFEBC_WEB_GITHUB = 'https://github.com/slarse/pdfebc-web'
 UPLOADED_FILES_KEY = 'uploaded_files'
-UPLOAD_DIR_KEY = 'temp_dir'
+SESSION_UPLOAD_DIR_KEY = 'upload_dir'
 TEMPORARY_DIRECTORY = tempfile.gettempdir()
+UPLOAD_DIRECTORY = os.path.join(TEMPORARY_DIRECTORY, 'pdfebc-web')
+os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
 SESSION_ID_KEY = 'session_id'
 UPLOAD_DIR_SUFFIX = 'pdfebc-web'
 UPLOADED_FILES = defaultdict(list)
@@ -49,6 +51,35 @@ def compress_and_serve_uploaded_files():
             return send_file(out)
 
 
+def create_session_upload_dir(session_id):
+    """Create an upload directory for the session.
+
+    Args:
+        session_id (str): The id for the session.
+    """
+    directory = os.path.join(UPLOAD_DIRECTORY, session_id)
+    os.mkdir(directory)
+
+
+def get_session_upload_dir_path(session_id):
+    """Return the path to the session upload directory
+
+    Args:
+        session_id (str): The id for the session.
+    """
+    return os.path.join(UPLOAD_DIRECTORY, session_id)
+
+
+def session_upload_dir_exists(session_id):
+    """Check if the session upload directory exists.
+
+    Args:
+        session_id (str): The id for the session.
+    """
+    directory = get_session_upload_dir_path(session_id)
+    return os.path.isdir(directory)
+
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
     """View for the index page."""
@@ -59,6 +90,7 @@ def index():
     session_id = session[SESSION_ID_KEY]
     if form.validate_on_submit():
         file = form.upload.data
+        filename = secure_filename(file.filename)
         UPLOADED_FILES[session_id].append((secure_filename(file.filename), file.read()))
     if test_form.validate_on_submit():
         return compress_and_serve_uploaded_files()
