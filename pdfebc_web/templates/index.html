@@ -2,19 +2,20 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% block styles %}{{ super() }}{% endblock %}
 {% block page_content %}
-{% if uploaded_files %}
-<div>
-    <ul>
-    {% for file in uploaded_files %}
-        <li>{{ file }}</li>
-    {% endfor %}
-    </ul>
-</div>
-{% endif %}
 <div class="uploadFormDiv">
     {{ wtf.quick_form(form) }}
 </div>
 <div class="uploadFormDiv">
+    {% if uploaded_files %}
+    <div>
+        <h3>Uploaded files:</h3>
+        <ul>
+        {% for file in uploaded_files %}
+            <li>{{ file }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
     {{ wtf.quick_form(test_form) }}
 </div>
 {% endblock %}
