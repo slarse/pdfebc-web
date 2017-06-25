@@ -13,7 +13,7 @@ import shutil
 import tempfile
 import uuid
 import tarfile
-from pdfebc_core import email_utils, compress
+from pdfebc_core import email_utils, compress, config_utils
 from flask import render_template, send_file, session, flash, Blueprint, redirect, url_for
 from werkzeug import secure_filename
 from .forms import FileUploadForm, CompressFilesForm
@@ -21,7 +21,7 @@ from .forms import FileUploadForm, CompressFilesForm
 PDFEBC_CORE_GITHUB = 'https://github.com/slarse/pdfebc-core'
 PDFEBC_WEB_GITHUB = 'https://github.com/slarse/pdfebc-web'
 
-FILE_CACHE = os.path.join(tempfile.gettempdir(), 'pdfebc-web')
+FILE_CACHE = os.path.join(os.path.dirname(config_utils.CONFIG_PATH), 'pdfebc-web')
 os.makedirs(FILE_CACHE, exist_ok=True)
 
 SESSION_ID_KEY = 'session_id'
@@ -121,7 +121,7 @@ def construct_blueprint(celery):
         """
         session_upload_dir = get_session_upload_dir_path(session_id)
         tar = compress_uploaded_files(session_upload_dir)
-        email_utils.send_files_preconf(tar)
+        email_utils.send_files_preconf([tar])
 
     @main.route('/', methods=['GET', 'POST'])
     def index():
