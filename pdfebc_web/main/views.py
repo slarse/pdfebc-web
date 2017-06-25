@@ -110,12 +110,6 @@ def tarball_in_session_upload_dir(session_id):
 def construct_blueprint(celery):
     main = Blueprint('main', __name__)
 
-    @celery.task
-    def stupid_background_task():
-        for _ in range(10):
-            print('BACKGROUND TASK')
-            time.sleep(2)
-
     @main.route('/', methods=['GET', 'POST'])
     def index():
         """View for the index page."""
@@ -144,12 +138,6 @@ def construct_blueprint(celery):
                                    for file in os.listdir(session_upload_dir_path)
                                    if file.endswith('.pdf')],
                                test_form=test_form)
-
-    @main.route('/stupid')
-    def stupid():
-        stupid_background_task.delay()
-        return redirect(url_for('main.index'))
-
 
     @main.route('/about')
     def about():
