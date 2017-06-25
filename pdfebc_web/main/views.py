@@ -101,9 +101,9 @@ def tarball_in_session_upload_dir(session_id):
     Ags:
         session_id (str): Id of the session.
     """
-    filenames = os.listdir(
-        get_session_upload_dir_path(session_id))
-    return any(map(lambda filename: filename.endswith('.tgz'), filenames))
+    session_upload_dir = get_session_upload_dir_path(session_id)
+    return session_upload_dir_exists(session_id) and \
+            any(map(lambda filename: filename.endswith('.tgz'), os.listdir(session_upload_dir)))
 
 
 @main.route('/', methods=['GET', 'POST'])
