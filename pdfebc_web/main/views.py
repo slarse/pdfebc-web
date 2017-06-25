@@ -7,15 +7,16 @@
 
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
+import time
 import os
 import shutil
 import tempfile
 import uuid
 import tarfile
-from flask import render_template, send_file, session, flash
+from celery import Celery
+from flask import render_template, send_file, session, flash, Blueprint, redirect, url_for
 from werkzeug import secure_filename
 from pdfebc_core import compress
-from . import main
 from .forms import FileUploadForm, CompressFilesForm
 
 PDFEBC_CORE_GITHUB = 'https://github.com/slarse/pdfebc-core'
@@ -25,6 +26,7 @@ FILE_CACHE = os.path.join(tempfile.gettempdir(), 'pdfebc-web')
 os.makedirs(FILE_CACHE, exist_ok=True)
 
 SESSION_ID_KEY = 'session_id'
+
 
 def make_tarfile(src_dir, out):
     """Make a tar archive from the src_dir.
@@ -105,40 +107,55 @@ def tarball_in_session_upload_dir(session_id):
     return session_upload_dir_exists(session_id) and \
             any(map(lambda filename: filename.endswith('.tgz'), os.listdir(session_upload_dir)))
 
+def construct_blueprint(celery):
+    main = Blueprint('main', __name__)
 
-@main.route('/', methods=['GET', 'POST'])
-def index():
-    """View for the index page."""
-    test_form = CompressFilesForm()
-    form = FileUploadForm()
-    if SESSION_ID_KEY not in session:
-        session[SESSION_ID_KEY] = str(uuid.uuid4())
-    session_id = session[SESSION_ID_KEY]
-    if tarball_in_session_upload_dir(session_id):
-        clear_session_upload_dir(session_id)
-    session_upload_dir_path = get_session_upload_dir_path(session_id)
-    if not session_upload_dir_exists(session_id):
-        create_session_upload_dir(session_id)
-    if form.validate_on_submit():
-        file = form.upload.data
-        filename = secure_filename(file.filename)
-        file.save(
-            os.path.join(session_upload_dir_path, filename))
-        flash("{} was successfully uploaded!".format(filename))
-    if test_form.validate_on_submit():
-        tar = compress_uploaded_files(session_upload_dir_path)
-        return send_file(tar, as_attachment=True)
-    return render_template('index.html', form=form,
-                           uploaded_files=[
-                               file
-                               for file in os.listdir(session_upload_dir_path)
-                               if file.endswith('.pdf')],
-                           test_form=test_form)
+    @celery.task
+    def stupid_background_task():
+        for _ in range(10):
+            print('BACKGROUND TASK')
+            time.sleep(2)
+
+    @main.route('/', methods=['GET', 'POST'])
+    def index():
+        """View for the index page."""
+        test_form = CompressFilesForm()
+        form = FileUploadForm()
+        if SESSION_ID_KEY not in session:
+            session[SESSION_ID_KEY] = str(uuid.uuid4())
+        session_id = session[SESSION_ID_KEY]
+        session_upload_dir_path = get_session_upload_dir_path(session_id)
+        if not session_upload_dir_exists(session_id):
+            create_session_upload_dir(session_id)
+        if tarball_in_session_upload_dir(session_id):
+            clear_session_upload_dir(session_id)
+        if form.validate_on_submit():
+            file = form.upload.data
+            filename = secure_filename(file.filename)
+            file.save(
+                os.path.join(session_upload_dir_path, filename))
+            flash("{} was successfully uploaded!".format(filename))
+        if test_form.validate_on_submit():
+            tar = compress_uploaded_files(session_upload_dir_path)
+            return send_file(tar, as_attachment=True)
+        return render_template('index.html', form=form,
+                               uploaded_files=[
+                                   file
+                                   for file in os.listdir(session_upload_dir_path)
+                                   if file.endswith('.pdf')],
+                               test_form=test_form)
+
+    @main.route('/stupid')
+    def stupid():
+        stupid_background_task.delay()
+        return redirect(url_for('main.index'))
 
 
-@main.route('/about')
-def about():
-    """View for the about page."""
-    return render_template('about.html',
-                           pdfebc_web_github=PDFEBC_WEB_GITHUB,
-                           pdfebc_core_github=PDFEBC_CORE_GITHUB)
+    @main.route('/about')
+    def about():
+        """View for the about page."""
+        return render_template('about.html',
+                               pdfebc_web_github=PDFEBC_WEB_GITHUB,
+                               pdfebc_core_github=PDFEBC_CORE_GITHUB)
+
+    return main
