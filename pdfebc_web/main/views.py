@@ -13,10 +13,9 @@ import shutil
 import tempfile
 import uuid
 import tarfile
-from celery import Celery
+from pdfebc_core import email_utils, compress
 from flask import render_template, send_file, session, flash, Blueprint, redirect, url_for
 from werkzeug import secure_filename
-from pdfebc_core import compress
 from .forms import FileUploadForm, CompressFilesForm
 
 PDFEBC_CORE_GITHUB = 'https://github.com/slarse/pdfebc-core'
@@ -51,8 +50,10 @@ def compress_uploaded_files(src_dir):
     Returns:
         str: Path to a tarball with the compressed files.
     """
+    def debug_status_callback(msg):
+        print(msg)
     with tempfile.TemporaryDirectory() as tmpdir:
-        compress.compress_multiple_pdfs(src_dir, tmpdir, 'gs')
+        compress.compress_multiple_pdfs(src_dir, tmpdir, 'gs', status_callback=debug_status_callback)
         out = os.path.join(src_dir, 'compressed_files.tgz')
         make_tarfile(tmpdir, out)
     return out
@@ -110,6 +111,18 @@ def tarball_in_session_upload_dir(session_id):
 def construct_blueprint(celery):
     main = Blueprint('main', __name__)
 
+    @celery.task
+    def compress_and_email_files(session_id):
+        """Compress the files uploaded to the session upload directory and send them
+        by email with the preconfigured values in the pdfebc-core config.
+
+        Args:
+            session_id (str): Id of the session.
+        """
+        session_upload_dir = get_session_upload_dir_path(session_id)
+        tar = compress_uploaded_files(session_upload_dir)
+        email_utils.send_files_preconf(tar)
+
     @main.route('/', methods=['GET', 'POST'])
     def index():
         """View for the index page."""
@@ -130,8 +143,9 @@ def construct_blueprint(celery):
                 os.path.join(session_upload_dir_path, filename))
             flash("{} was successfully uploaded!".format(filename))
         if test_form.validate_on_submit():
-            tar = compress_uploaded_files(session_upload_dir_path)
-            return send_file(tar, as_attachment=True)
+            compress_and_email_files.delay(session_id)
+            flash("Your files are being compressed and will be sent by email upon completion.")
+            return redirect(url_for('main.index'))
         return render_template('index.html', form=form,
                                uploaded_files=[
                                    file
