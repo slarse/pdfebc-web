@@ -1,5 +1,4 @@
-from flask import Blueprint
-
-main = Blueprint('main', __name__)
-
 from . import views
+
+def construct_blueprint(celery):
+    return views.construct_blueprint(celery)
