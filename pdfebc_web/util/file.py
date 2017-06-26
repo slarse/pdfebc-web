@@ -15,6 +15,10 @@ from pdfebc_core import compress, config_utils
 
 FILE_CACHE = os.path.join(os.path.dirname(config_utils.CONFIG_PATH), 'pdfebc-web')
 
+class ArchivingError(Exception):
+    """An error to be thrown something goes wrong when archiving a directory."""
+    pass
+
 def make_tarfile(src_dir, out):
     """Make a tar archive from the src_dir.
 
@@ -23,7 +27,13 @@ def make_tarfile(src_dir, out):
         out: Path to the output file.
     Returns:
         str: Path to the tarball.
+    Raises:
+        ArchivingError
     """
+    if not os.path.isdir(src_dir):
+        raise ArchivingError("'{}' is not a directory!".format(src_dir))
+    if not os.listdir(src_dir):
+        raise ArchivingError("The source directory is empty!")
     if not out.endswith('.tgz'):
         out += '.tgz'
     with tarfile.open(out, 'w:gz') as tar:
