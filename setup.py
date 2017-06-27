@@ -17,7 +17,7 @@ required = [
 
 setup(
     name='pdfebc-web',
-    version='0.0.1',
+    version='0.1.0',
     description='Web interface for pdfebc.',
     long_description=readme,
     author='Simon Larsén',
