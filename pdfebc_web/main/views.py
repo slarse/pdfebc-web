@@ -35,10 +35,13 @@ def construct_blueprint(celery):
         Blueprint: A Flask Blueprint.
     """
     main = Blueprint('main', __name__)
-    config = config_utils.read_config()
-    gs_binary = config_utils.get_attribute_from_config(
-        config, config_utils.DEFAULT_SECTION_KEY, config_utils.GS_DEFAULT_BINARY_KEY)
-    print(gs_binary)
+    #TODO This is a suboptimal way of reading the config, fix it!
+    if config_utils.valid_config_exists():
+        config = config_utils.read_config()
+        gs_binary = config_utils.get_attribute_from_config(config, config_utils.DEFAULT_SECTION_KEY,
+                                                           config_utils.GS_DEFAULT_BINARY_KEY)
+    else:
+        gs_binary = 'gs'
 
     @celery.task
     def process_uploaded_files(session_id):
