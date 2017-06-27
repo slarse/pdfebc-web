@@ -102,7 +102,15 @@ to PyPi. Unless you are planning to work on this yourself, I suggest going with 
    
 How to run
 ==========
-Not quite there yet.
+Assuming everything is installed correctly, running the application is dead simple.
+
+1. Execute ``pdfebc-web-start-celery-redis`` to start up the ``Redis`` server and 4 ``Celery``
+   workers. The script will complain if ``Redis`` or ``Celery`` is not installed.
+2. Execute ``pdfebc-web runserver -h x.x.x.x -p n`` to run ``pdfebc-web`` while listening
+   to address ``x.x.x.x`` and port ``n``. Do note that if you run the server as root,
+   for example if you want to run it on a port lower than 1000,
+   then ``appdirs`` will likely look for a different configuration directory than if you
+   run it as your normal user (because root is a different user).
 
 License
 =======
