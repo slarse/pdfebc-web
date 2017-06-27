@@ -1,0 +1,4 @@
+#! /usr/bin/env bash
+
+redis-server &
+celery -A pdfebc_web.startapp.celery worker &

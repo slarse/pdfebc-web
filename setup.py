@@ -25,7 +25,7 @@ setup(
     url='https://github.com/slarse/pdfebc-web',
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
-    scripts=['bin/pdfebc-web'],
+    scripts=['bin/pdfebc-web', 'bin/pdfebc-web-start-celery-redis'],
     tests_require=test_requirements,
     install_requires=required
 )
