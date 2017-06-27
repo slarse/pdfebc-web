@@ -8,11 +8,8 @@
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
 import os
-import shutil
-import tempfile
 import uuid
-import tarfile
-from pdfebc_core import email_utils, compress, config_utils
+from pdfebc_core import email_utils, config_utils
 from flask import render_template, session, flash, Blueprint, redirect, url_for
 from werkzeug import secure_filename
 from .forms import FileUploadForm, CompressFilesForm
@@ -38,6 +35,10 @@ def construct_blueprint(celery):
         Blueprint: A Flask Blueprint.
     """
     main = Blueprint('main', __name__)
+    config = config_utils.read_config()
+    gs_binary = config_utils.get_attribute_from_config(
+        config, config_utils.DEFAULT_SECTION_KEY, config_utils.GS_DEFAULT_BINARY_KEY)
+    print(gs_binary)
 
     @celery.task
     def process_uploaded_files(session_id):
@@ -50,7 +51,7 @@ def construct_blueprint(celery):
             session_id (str): Id of the session.
         """
         session_upload_dir = get_session_upload_dir_path(session_id)
-        filepaths = compress_uploaded_files(session_upload_dir)
+        filepaths = compress_uploaded_files(session_upload_dir, gs_binary)
         email_utils.send_files_preconf(filepaths)
         delete_session_upload_dir(session_id)
 
@@ -63,7 +64,6 @@ def construct_blueprint(celery):
             session[SESSION_ID_KEY] = str(uuid.uuid4())
         session_id = session[SESSION_ID_KEY]
         session_upload_dir_path = get_session_upload_dir_path(session_id)
-        print(session_upload_dir_path)
         if not session_upload_dir_exists(session_id):
             create_session_upload_dir(session_id)
         if form.validate_on_submit():

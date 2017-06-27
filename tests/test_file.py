@@ -156,8 +156,9 @@ class FileTest(TestCase):
     @patch('pdfebc_core.compress.compress_multiple_pdfs', autospec=True, return_value=None)
     def test_compress_uploaded_files(self, mock_compress_multiple_files):
         with tempfile.TemporaryDirectory() as src_dir:
+            gs_binary = 'gs'
             mock_callback = Mock()
-            pdfebc_web.util.file.compress_uploaded_files(src_dir, mock_callback)
+            pdfebc_web.util.file.compress_uploaded_files(src_dir, gs_binary, mock_callback)
             src_dir_contents = os.listdir(src_dir)
             self.assertEqual(1, len(src_dir_contents))
             self.assertTrue(os.path.isdir(src_dir))
@@ -167,15 +168,17 @@ class FileTest(TestCase):
         with tempfile.TemporaryDirectory() as src_dir:
             pass
         with self.assertRaises(FileNotFoundError):
-            pdfebc_web.util.file.compress_uploaded_files(src_dir)
+            gs_binary = 'gs'
+            pdfebc_web.util.file.compress_uploaded_files(src_dir, gs_binary)
         
     @patch('pdfebc_web.util.file.make_tarfile')
     @patch('pdfebc_core.compress.compress_multiple_pdfs', autospec=True, return_value=None)
     def test_compress_uploaded_files_to_tgz(self, mock_compress_multiple_pdfs, mock_make_tarfile):
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch('tempfile.TemporaryDirectory', autospec=True) as mock_tmpdir:
+                gs_binary = 'gs'
                 mock_tmpdir.return_value.__enter__.return_value = tmpdir
-                pdfebc_web.util.file.compress_uploaded_files_to_tgz(self.temp_source_dir.name)
+                pdfebc_web.util.file.compress_uploaded_files_to_tgz(self.temp_source_dir.name, gs_binary)
                 mock_compress_multiple_pdfs.assert_called_once_with(
-                    self.temp_source_dir.name, tmpdir, 'gs', None)
+                    self.temp_source_dir.name, tmpdir, gs_binary, None)
 

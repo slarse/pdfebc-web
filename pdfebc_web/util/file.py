@@ -40,7 +40,7 @@ def make_tarfile(src_dir, out):
         tar.add(src_dir, arcname=os.path.basename(src_dir))
 
 
-def compress_uploaded_files_to_tgz(src_dir, status_callback=None):
+def compress_uploaded_files_to_tgz(src_dir, gs_binary, status_callback=None):
     """Compress the files in src_dir and place in a comrpessed tarball.
 
     Args:
@@ -49,13 +49,13 @@ def compress_uploaded_files_to_tgz(src_dir, status_callback=None):
         str: Path to a tarball with the compressed files.
     """
     with tempfile.TemporaryDirectory() as tmpdir:
-        compress.compress_multiple_pdfs(src_dir, tmpdir, 'gs', status_callback=status_callback)
+        compress.compress_multiple_pdfs(src_dir, tmpdir, gs_binary, status_callback=status_callback)
         out = os.path.join(src_dir, 'compressed_files.tgz')
         make_tarfile(tmpdir, out)
     return out
 
 
-def compress_uploaded_files(src_dir, status_callback=None):
+def compress_uploaded_files(src_dir, gs_binary, status_callback=None):
     """Compress the pdf files in the given source directory and place them in a
     subdirectory.
 
@@ -66,7 +66,8 @@ def compress_uploaded_files(src_dir, status_callback=None):
     """
     out_dir = os.path.join(src_dir, 'compressed_files')
     os.mkdir(out_dir)
-    return compress.compress_multiple_pdfs(src_dir, out_dir, 'gs', status_callback=status_callback)
+    return compress.compress_multiple_pdfs(
+        src_dir, out_dir, gs_binary, status_callback=status_callback)
 
 
 def create_session_upload_dir(session_id):
