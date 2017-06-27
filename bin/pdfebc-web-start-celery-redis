@@ -1,4 +1,7 @@
 #! /usr/bin/env bash
 
+hash redis-server 2> /dev/null || echo >&2 'Could not find Redis, please install it!'; exit 1
+hash celery 2> /dev/null || echo >&2 'Could not find Celery, please install it!'
+
 redis-server &
 celery -A pdfebc_web.startapp.celery worker &
