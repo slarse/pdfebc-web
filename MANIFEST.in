@@ -1,3 +1,5 @@
 include README.rst
 include LICENSE
 include config.cnf
+recursive-include pdfebc_web/templates *
+recursive-include pdfebc_web/static *
