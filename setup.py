@@ -30,5 +30,7 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     scripts=['bin/pdfebc-web', 'bin/pdfebc-web-start-celery-redis'],
     tests_require=test_requirements,
-    install_requires=required
+    install_requires=required,
+    include_package_data=True,
+    zip_safe=False
 )
