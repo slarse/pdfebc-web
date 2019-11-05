@@ -9,7 +9,7 @@ with open('LICENSE') as f:
 
 test_requirements = []
 required = [
-    'Flask==0.12.2',
+    'Flask==1.0',
     'Flask-Bootstrap==3.3.7.1',
     'Flask-Script==2.0.5',
     'Flask-WTF==0.14.2',
