@@ -15,7 +15,7 @@ required = [
     'Flask-WTF==0.14.2',
     'pdfebc-core==0.2.0',
     'redis==2.10.5',
-    'celery==4.0.2']
+    'celery==5.2.2']
 
 setup(
     name='pdfebc-web',
